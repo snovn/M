@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <title>Interactive Page</title>
+    <!-- Google Fonts: Patrick Hand for body and Montserrat for buttons -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        overflow-x: hidden;
+        scrollbar-width: none;
+      }
+      ::-webkit-scrollbar {
+        display: none;
+      }
+      body {
+        font-family: "Patrick Hand", cursive;
+        background-color: #f5f0e1;
+        min-height: 100dvh;
+        position: relative;
+        overflow-x: hidden;
+        transition: background-color 0.65s ease;
+      }
+      .container {
+        display: flex;
+        transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        width: 300vw;
+        min-height: 100dvh;
+      }
+      /* Each section carries its own color scheme index via data attribute */
+      .section {
+        position: relative;
+        width: 100vw;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        font-size: clamp(1.2rem, 4vw, 2rem);
+        transform-origin: center;
+      }
+      /* Canvas for particle hearts */
+      .particles-canvas {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: -1;
+        pointer-events: none;
+      }
+      nav {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        display: flex;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(245, 240, 225, 0.95);
+        padding: 12px 10px calc(12px + env(safe-area-inset-bottom));
+        z-index: 1000;
+        backdrop-filter: blur(8px);
+        border-top: 1px solid #e0d6c3;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+        transform: translateZ(0);
+        will-change: transform;
+        transition: background-color 0.65s ease, border-top-color 0.65s ease;
+      }
+      button {
+        padding: 12px 24px;
+        font-size: 1em;
+        cursor: pointer;
+        border: none;
+        border-radius: 8px;
+        background: #e0d6c3;
+        min-width: 100px;
+        transition: background-color 0.65s ease, transform 0.2s ease;
+        /* Use Montserrat for buttons */
+        font-family: "Montserrat", sans-serif;
+      }
+      button:active {
+        transform: scale(0.96);
+      }
+      /* Highlight active nav button */
+      nav button.active {
+        border: 2px solid #333;
+        transform: scale(1.05);
+      }
+      /* Updated mute button: squarish with a transparent white background */
+      #mute-btn {
+        position: fixed;
+        top: max(20px, env(safe-area-inset-top));
+        right: max(20px, env(safe-area-inset-right));
+        background: rgba(255, 255, 255, 0.3);
+        border: none;
+        font-size: 1.5em;
+        cursor: pointer;
+        border-radius: 8px;
+        width: 50px;
+        height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(4px);
+        transition: transform 0.2s ease;
+      }
+      #mute-btn:active {
+        transform: scale(0.9);
+      }
+      /* Typewriter effect container for welcome text */
+      #read-me-text {
+        margin: 10px 0;
+        max-width: 90%;
+        position: relative;
+        white-space: nowrap;
+        overflow: hidden;
+        border-right: 2px solid;
+        animation: blink-caret 0.8s step-end infinite;
+      }
+      /* Letter paper style for the read-me letter */
+      #letter {
+        display: none;
+        background: #fff;
+        padding: 20px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        max-width: 90%;
+        margin: 20px;
+        animation: fadeIn 0.4s ease;
+        font-family: "Courier New", Courier, monospace;
+        line-height: 1.6;
+      }
+      /* Spotify embed styling: made smaller */
+      .spotify-embed {
+        width: 90%;
+        max-width: 600px;
+        height: 120px;
+        border-radius: 12px;
+        overflow: hidden;
+        margin: 20px auto;
+        animation: scaleUp 0.5s ease;
+      }
+      /* Code image styling */
+      .code-image {
+        width: 90%;
+        max-width: 600px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+      }
+      @media (min-width: 768px) {
+        .code-image {
+          max-width: 400px;
+        }
+      }
+      /* Styling for the meeting duration section */
+      #meeting {
+        margin-top: 20px;
+        text-align: center;
+        font-size: 0.9em;
+      }
+      #meeting p {
+        margin-bottom: 10px;
+        font-weight: bold;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes blink-caret {
+        from,
+        to {
+          border-color: transparent;
+        }
+        50% {
+          border-color: black;
+        }
+      }
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes scaleUp {
+        from {
+          transform: scale(0.95);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      @media (max-width: 768px) {
+        nav {
+          gap: 6px;
+          padding: 10px 5px calc(10px + env(safe-area-inset-bottom));
+        }
+        button {
+          padding: 10px 15px;
+          min-width: auto;
+          font-size: 0.9em;
+        }
+        .spotify-embed {
+          height: 100px;
+        }
+        #mute-btn {
+          top: max(10px, env(safe-area-inset-top));
+          right: max(10px, env(safe-area-inset-right));
+          width: 45px;
+          height: 45px;
+        }
+      }
+      @media (max-width: 480px) {
+        .section {
+          padding: 15px;
+        }
+        .spotify-embed {
+          height: 90px;
+          margin: 10px;
+        }
+        #mute-btn {
+          width: 40px;
+          height: 40px;
+          font-size: 1.3em;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <audio id="bg-music" loop>
+      <source src="song.mp3" type="audio/mp3" />
+    </audio>
+
+    <button id="mute-btn">🔊</button>
+    <div class="container" id="slider">
+      <!-- Section 1 (data-color="0") -->
+      <section id="read-me" class="section" data-color="0">
+        <canvas class="particles-canvas"></canvas>
+        <!-- Original order: typewriter title, then 1.gif, then the Read Me button -->
+        <div id="read-me-text"></div>
+        <div style="width: 190px; text-align: center">
+          <img
+            src="1.gif"
+            alt="Decoration"
+            style="display: block; width: 100%; margin: 10px 0 0 0"
+          />
+          <button onclick="toggleLetter()" style="display: block; width: 100%">
+            Read Me
+          </button>
+        </div>
+
+        <!-- Styled like a letter paper -->
+        <div id="letter">
+          Didn't think that I'd have someone so kind and loving by my side.
+          <br />
+          I may not know poetry, but I know you're always there for me. <br />
+          I don't want to be hypocritical—we haven't known each other for long,
+          <br />
+          but you came into my life in the most unexpected way, <br />
+          and for that, I'll always be grateful.
+        </div>
+      </section>
+      <!-- Section 2 (data-color="1") -->
+      <section id="playlist" class="section" data-color="1">
+        <canvas class="particles-canvas"></canvas>
+        <!-- Code image above Spotify embed -->
+        <img src="code.png" alt="Code" class="code-image" />
+        <div class="spotify-embed">
+          <iframe
+            src="https://open.spotify.com/embed/playlist/58oviTxqtx7sJOsXDiVLZd?utm_source=generator"
+            width="100%"
+            height="100%"
+            frameborder="0"
+            allowtransparency="true"
+            allow="encrypted-media"
+          ></iframe>
+        </div>
+      </section>
+      <!-- Section 3 (data-color="2") -->
+      <section id="clock" class="section" data-color="2">
+        <canvas class="particles-canvas"></canvas>
+        <!-- Meeting duration display with 2.gif inserted -->
+        <div id="meeting">
+          <p>We've known eachother for:</p>
+          <img
+            src="2.gif"
+            alt="Decoration"
+            style="max-width: 100%; margin: 10px 0"
+          />
+          <div id="meeting-duration"></div>
+        </div>
+      </section>
+    </div>
+    <nav>
+      <button onclick="scrollToSection(0)">Home</button>
+      <button onclick="scrollToSection(1)">Playlist</button>
+      <button onclick="scrollToSection(2)">Clock</button>
+    </nav>
+
+    <script>
+      // Global color schemes including heart and border colors
+      const colors = [
+        {
+          body: "#f5f0e1",
+          nav: "rgba(245, 240, 225, 0.95)",
+          button: "#e0d6c3",
+          heart: "#d4a373",
+          border: "#e0d6c3",
+        },
+        {
+          body: "#e3f2fd",
+          nav: "rgba(227, 242, 253, 0.95)",
+          button: "#bbdefb",
+          heart: "#90caf9",
+          border: "#90caf9",
+        },
+        {
+          body: "#ffebee",
+          nav: "rgba(255, 235, 238, 0.95)",
+          button: "#ffcdd2",
+          heart: "#ef9a9a",
+          border: "#ef9a9a",
+        },
+      ];
+
+      // Mute button functionality
+      const bgMusic = document.getElementById("bg-music");
+      const muteBtn = document.getElementById("mute-btn");
+      let isMuted = localStorage.getItem("muted") === "true";
+      bgMusic.muted = isMuted;
+      updateMuteButton();
+      function updateMuteButton() {
+        muteBtn.textContent = bgMusic.muted ? "🔇" : "🔊";
+        localStorage.setItem("muted", bgMusic.muted);
+      }
+      muteBtn.addEventListener("click", () => {
+        bgMusic.muted = !bgMusic.muted;
+        updateMuteButton();
+      });
+
+      // Update backgrounds, nav border, button colors, and active nav button when switching sections
+      function scrollToSection(index) {
+        document.getElementById("slider").style.transform = `translateX(-${
+          index * 100
+        }vw)`;
+        document.body.style.backgroundColor = colors[index].body;
+        const nav = document.querySelector("nav");
+        nav.style.backgroundColor = colors[index].nav;
+        nav.style.borderTopColor = colors[index].border;
+        document.querySelectorAll("button:not(#mute-btn)").forEach((btn) => {
+          btn.style.backgroundColor = colors[index].button;
+        });
+        // Update active class on nav buttons
+        const navButtons = document.querySelectorAll("nav button");
+        navButtons.forEach((btn, i) => {
+          if (i === index) {
+            btn.classList.add("active");
+          } else {
+            btn.classList.remove("active");
+          }
+        });
+      }
+
+      // Function to compute duration breakdown between two dates
+      function getDuration(start, end) {
+        let years = end.getFullYear() - start.getFullYear();
+        let months = end.getMonth() - start.getMonth();
+        let days = end.getDate() - start.getDate();
+        let hours = end.getHours() - start.getHours();
+        let minutes = end.getMinutes() - start.getMinutes();
+        let seconds = end.getSeconds() - start.getSeconds();
+
+        if (seconds < 0) {
+          seconds += 60;
+          minutes--;
+        }
+        if (minutes < 0) {
+          minutes += 60;
+          hours--;
+        }
+        if (hours < 0) {
+          hours += 24;
+          days--;
+        }
+        if (days < 0) {
+          // Get the number of days in the previous month
+          const prevMonth = new Date(end.getFullYear(), end.getMonth(), 0);
+          days += prevMonth.getDate();
+          months--;
+        }
+        if (months < 0) {
+          months += 12;
+          years--;
+        }
+        return { years, months, days, hours, minutes, seconds };
+      }
+
+      // Clock and meeting duration functionality
+      function updateClock() {
+        const now = new Date();
+        // Meeting date: February 3, 2025 9:26 PM GMT+2
+        const meetingDate = new Date("February 3, 2025 21:26:00 GMT+0200");
+        // Compute duration since the meeting date
+        const duration = getDuration(meetingDate, now);
+        // Use abbreviations: yr, mon, day, hr, min, sec
+        const durationStr =
+          `${duration.years}yr, ${duration.months}mon, ${duration.days}day, ` +
+          `${duration.hours}hr, ${duration.minutes}min, ${duration.seconds}sec`;
+        document.getElementById("meeting-duration").textContent = durationStr;
+
+        requestAnimationFrame(updateClock);
+      }
+      updateClock();
+
+      // Letter toggle
+      function toggleLetter() {
+        const letter = document.getElementById("letter");
+        const currentDisplay = window.getComputedStyle(letter).display;
+        letter.style.display = currentDisplay === "none" ? "block" : "none";
+
+        // Set volume to 20%
+        bgMusic.volume = 0.1;
+
+        // Play background music if it's not already playing
+        if (bgMusic.paused) {
+          bgMusic.play().catch((error) => {
+            console.error("Audio playback failed:", error);
+          });
+        }
+      }
+
+      // Handle iOS viewport resize
+      function handleViewport() {
+        document.documentElement.style.setProperty(
+          "--vh",
+          `${window.innerHeight * 0.01}px`
+        );
+      }
+      window.addEventListener("resize", handleViewport);
+      handleViewport();
+
+      // Draw a heart shape on a canvas context
+      function drawHeart(ctx, x, y, size, color) {
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.beginPath();
+        const topCurveHeight = size * 0.3;
+        ctx.moveTo(0, topCurveHeight);
+        ctx.bezierCurveTo(0, 0, -size / 2, 0, -size / 2, topCurveHeight);
+        ctx.bezierCurveTo(
+          -size / 2,
+          (size + topCurveHeight) / 2,
+          0,
+          size,
+          0,
+          size
+        );
+        ctx.bezierCurveTo(
+          0,
+          size,
+          size / 2,
+          (size + topCurveHeight) / 2,
+          size / 2,
+          topCurveHeight
+        );
+        ctx.bezierCurveTo(size / 2, 0, 0, 0, 0, topCurveHeight);
+        ctx.closePath();
+        ctx.fillStyle = color;
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Particle (heart) animation for each canvas
+      document.addEventListener("DOMContentLoaded", () => {
+        // Initialize first section as active
+        scrollToSection(0);
+
+        document.querySelectorAll(".particles-canvas").forEach((canvas) => {
+          const ctx = canvas.getContext("2d");
+          const parent = canvas.parentElement;
+          // Ensure the canvas always fills its parent
+          function setCanvasSize() {
+            canvas.width = parent.clientWidth;
+            canvas.height = parent.clientHeight;
+          }
+          setCanvasSize();
+          // Get the section's color scheme index from its data attribute
+          const sectionIndex = parent.dataset.color || "0";
+          const heartColor = colors[parseInt(sectionIndex, 10)].heart;
+          const particles = [];
+          const numParticles = 50;
+          for (let i = 0; i < numParticles; i++) {
+            particles.push({
+              x: Math.random() * canvas.width,
+              y: Math.random() * canvas.height,
+              size: Math.random() * 4 + 8,
+              speed: Math.random() * 1 + 0.5,
+            });
+          }
+          function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (const p of particles) {
+              p.y -= p.speed;
+              if (p.y < -p.size) {
+                p.y = canvas.height + p.size;
+                p.x = Math.random() * canvas.width;
+              }
+              drawHeart(ctx, p.x, p.y, p.size, heartColor);
+            }
+            requestAnimationFrame(animate);
+          }
+          animate();
+          window.addEventListener("resize", setCanvasSize);
+        });
+
+        // Typewriter effect for the welcome text
+        const welcomeText = "hello there!";
+        const readMeElem = document.getElementById("read-me-text");
+        let i = 0;
+        function typeWriter() {
+          if (i < welcomeText.length) {
+            readMeElem.textContent += welcomeText.charAt(i);
+            i++;
+            setTimeout(typeWriter, 100);
+          }
+        }
+        typeWriter();
+      });
+    </script>
+  </body>
+</html>
