@@ -370,18 +370,25 @@
         updateMuteButton();
       });
 
-      // Update backgrounds, nav border, button colors, and active nav button when switching sections
       function scrollToSection(index) {
+        // Hide the letter automatically when switching sections
+        document.getElementById("letter").style.display = "none";
+
+        // Slide the container to the desired section
         document.getElementById("slider").style.transform = `translateX(-${
           index * 100
         }vw)`;
+
+        // Update background colors and styles for the new section
         document.body.style.backgroundColor = colors[index].body;
         const nav = document.querySelector("nav");
         nav.style.backgroundColor = colors[index].nav;
         nav.style.borderTopColor = colors[index].border;
+
         document.querySelectorAll("button:not(#mute-btn)").forEach((btn) => {
           btn.style.backgroundColor = colors[index].button;
         });
+
         // Update active class on nav buttons
         const navButtons = document.querySelectorAll("nav button");
         navButtons.forEach((btn, i) => {
@@ -444,21 +451,21 @@
       }
       updateClock();
 
-      // Letter toggle
       function toggleLetter() {
         const letter = document.getElementById("letter");
         const currentDisplay = window.getComputedStyle(letter).display;
         letter.style.display = currentDisplay === "none" ? "block" : "none";
 
-        // Set volume to 20%
+        // Set volume and play background music
         bgMusic.volume = 0.3;
-
-        // Play background music if it's not already playing
         if (bgMusic.paused) {
           bgMusic.play().catch((error) => {
             console.error("Audio playback failed:", error);
           });
         }
+
+        // Trigger a window resize event so canvas sizes update accordingly
+        window.dispatchEvent(new Event("resize"));
       }
 
       // Handle iOS viewport resize
