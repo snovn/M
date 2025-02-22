@@ -372,7 +372,9 @@
 
       function scrollToSection(index) {
         // Hide the letter automatically when switching sections
-        document.getElementById("letter").style.display = "none";
+        setTimeout(() => {
+          document.getElementById("letter").style.display = "none";
+        }, 650);
 
         // Slide the container to the desired section
         document.getElementById("slider").style.transform = `translateX(-${
